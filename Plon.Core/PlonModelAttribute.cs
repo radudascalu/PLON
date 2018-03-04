@@ -64,7 +64,7 @@ namespace PLON.Core
 
         private string GetModelPlonMetadata()
         {
-            throw new NotImplementedException();
+            return Plon.Serialization.Metadata.getPlonMetadata(modelType);
         }
 
         private void CreatePreconditionFailedResponse(HttpActionContext actionContext)

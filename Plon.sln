@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.SampleApp", "Plon.Samp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.Core", "Plon.Core\Plon.Core.csproj", "{9B12BA89-0478-4A21-B5D4-C4276D0DE718}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plon.Serialization", "Plon.Serialization\Plon.Serialization.fsproj", "{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{9B12BA89-0478-4A21-B5D4-C4276D0DE718}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B12BA89-0478-4A21-B5D4-C4276D0DE718}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B12BA89-0478-4A21-B5D4-C4276D0DE718}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
