@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.SampleApp", "Plon.SampleApp\Plon.SampleApp.csproj", "{E0FA1417-C552-4A70-A3CD-703EE1554A38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.Core", "Plon.Core\Plon.Core.csproj", "{9B12BA89-0478-4A21-B5D4-C4276D0DE718}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{E0FA1417-C552-4A70-A3CD-703EE1554A38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E0FA1417-C552-4A70-A3CD-703EE1554A38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E0FA1417-C552-4A70-A3CD-703EE1554A38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B12BA89-0478-4A21-B5D4-C4276D0DE718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B12BA89-0478-4A21-B5D4-C4276D0DE718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B12BA89-0478-4A21-B5D4-C4276D0DE718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B12BA89-0478-4A21-B5D4-C4276D0DE718}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
