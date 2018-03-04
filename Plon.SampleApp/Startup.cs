@@ -12,7 +12,6 @@ namespace Plon.SampleApp
     {
         public void Configuration(IAppBuilder app)
         {
-            ConfigureAuth(app);
         }
     }
 }
