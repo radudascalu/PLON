@@ -78,8 +78,59 @@ let (<!>) = mapParser
 
 let (|>>) x f = mapParser f x
 
-let returnParser value =
+let returnP value =
     let innerFn input =
         Success (value, input)
     Parser innerFn
 
+let applyP fP xP =
+    fP .>>. xP
+    |> mapParser (fun (f, x) -> f x)
+    
+let (<*>) = applyP
+
+let lift2 f xP yP =
+    returnP f <*> xP <*> yP
+
+let rec sequence parserList =
+    let cons head tail = head :: tail
+    let consP = lift2 cons
+    match parserList with
+    | [] ->
+        returnP []
+    | head :: tail ->
+        consP head (sequence tail)
+        
+let parseString str =
+    str
+    |> List.ofSeq
+    |> List.map parseChar
+    |> sequence    
+    |> mapParser (fun x -> System.String(List.toArray x))     
+        
+let rec parseZeroOrMore parser input =
+    let result = run parser input
+    match result with
+    | Failure errorMessage ->
+        ([], input)
+    | Success (parsed, inputAfterParse) ->
+        let (nextParsed, nextInputAfterParse) = parseZeroOrMore parser inputAfterParse
+        ((parsed :: nextParsed), nextInputAfterParse) 
+        
+let many parser =
+    let innerFn input =
+        let (parsed, remainingInput) = parseZeroOrMore parser input
+        Success (parsed, remainingInput)
+    Parser innerFn
+    
+let oneOrMore parser =
+    let innerFn input =
+        let result = run parser input
+        match result with 
+        | Failure errorMessage ->
+            Failure errorMessage
+        | Success (parsed, inputAfterParse) ->
+            let (nextParsed, nextInputAfterParse) = parseZeroOrMore parser inputAfterParse
+            Success (parsed :: nextParsed, nextInputAfterParse)
+    Parser innerFn
+    
