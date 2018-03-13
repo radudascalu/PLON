@@ -25,18 +25,28 @@ let run parser input =
     let (Parser innerFn) = parser
     innerFn input
 
-let andThen parser1 parser2 =
-    let innerFn input = 
-        let result1 = run parser1 input
-        match result1 with
-        | Failure message -> Failure message
-        | Success (value, remaining) ->
-            let result2 = run parser2 remaining
-            match result2 with
-            | Failure message -> Failure message
-            | Success (value2, remaining2) ->
-                Success ((value, value2), remaining2)
+let bindP fn parser =
+    let innerFn input =
+        let result = run parser input
+        match result with
+        | Failure error ->
+            Failure error
+        | Success (parsed, remainingInput) ->
+            let parser2 = fn parsed
+            run parser2 remainingInput
     Parser innerFn
+
+let (>>=) parser fn = bindP fn parser
+
+let returnP value =
+    let innerFn input =
+        Success (value, input)
+    Parser innerFn
+
+let andThen parser1 parser2 =
+    parser1 >>= (fun result1 ->
+    parser2 >>= (fun result2 ->
+        returnP (result1, result2)))
 
 let (.>>.) = andThen
 
@@ -78,14 +88,10 @@ let (<!>) = mapParser
 
 let (|>>) x f = mapParser f x
 
-let returnP value =
-    let innerFn input =
-        Success (value, input)
-    Parser innerFn
-
 let applyP fP xP =
-    fP .>>. xP
-    |> mapParser (fun (f, x) -> f x)
+    fP >>= (fun f ->
+    xP >>= (fun x ->
+        returnP (f x)))
     
 let (<*>) = applyP
 
@@ -124,13 +130,45 @@ let many parser =
     Parser innerFn
     
 let oneOrMore parser =
-    let innerFn input =
-        let result = run parser input
-        match result with 
-        | Failure errorMessage ->
-            Failure errorMessage
-        | Success (parsed, inputAfterParse) ->
-            let (nextParsed, nextInputAfterParse) = parseZeroOrMore parser inputAfterParse
-            Success (parsed :: nextParsed, nextInputAfterParse)
-    Parser innerFn
+    parser >>= (fun head ->
+    many parser >>= (fun tail ->
+        returnP (head :: tail)))
     
+let opt parser =
+    let some = parser |>> Some
+    let none = returnP None
+    some <|> none
+
+let parseInt input =
+    let resultToInt (sign, digits) =
+        let value = System.String(List.toArray digits) |> int
+        match sign with 
+        | Some _ -> -value
+        | None -> value
+
+    let digitParser = anyOf ['0'..'9']
+    let signParser = parseChar '-'
+    let digitsParser = (opt signParser) .>>. (oneOrMore digitParser)
+    
+    digitsParser
+    |>> resultToInt
+
+let (>>.) parser1 parser2 =
+    parser1 .>>. parser2
+    |>> (fun (a, b) -> b)
+
+let (.>>) parser1 parser2 =
+    parser1 .>>. parser2
+    |>> (fun (a, b) -> a)
+
+let between parser1 parser2 parser3 =
+    parser1 >>. parser2 .>> parser3
+    
+let parseOneOrMoreList elementParser separator =
+    let separatorParser = parseChar separator
+    let separatorAndThenElementParser = separatorParser >>. elementParser
+    elementParser .>>. (many separatorAndThenElementParser)
+    |>> (fun (p1, pRest) -> p1 :: pRest)
+    
+let parseList elementParser separator = 
+    parseOneOrMoreList elementParser separator <|> returnP []
