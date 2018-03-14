@@ -1,68 +1,102 @@
 ﻿// Implementation based on https://fsharpforfunandprofit.com/posts/understanding-parser-combinators-4/.
 module Parsing
 
+type ParserLabel = string
+type ParserError = string
+
 type Result<'a> =
     | Success of 'a
-    | Failure of string
+    | Failure of ParserLabel * ParserError
 
-type Parser<'t> = Parser of (string -> Result<'t * string>)
+type Parser<'t> = {
+    parseFn: (string -> Result<'t * string>)
+    label: ParserLabel
+}
 
-let parseChar charToMatch =
-    let innerFn str = 
-        if System.String.IsNullOrEmpty(str) then
-            Failure "Empty string."
+let satisfy predicate label =
+    let innerFn input = 
+        if System.String.IsNullOrEmpty(input) then
+            Failure (label, "Empty string.")
         else 
-            let first = str.[0]
-            if first = charToMatch then
-                Success (charToMatch, str)
+            let first = input.[0]
+            if predicate first then
+                Success (first, input.[1..])
             else 
-                Failure (sprintf "Expected %c, but received %c." charToMatch first)
-    Parser innerFn
+                Failure (label, (sprintf "Unexpected %c" first))
+    { parseFn = innerFn; label = label }
 
-let parseA = parseChar 'A'
+let parseChar charToMatch = 
+    let predicate = (fun char -> char = charToMatch)
+    let label = sprintf "%c" charToMatch
+    satisfy predicate label
 
 let run parser input =
-    let (Parser innerFn) = parser
-    innerFn input
+    parser.parseFn input
+
+let setLabel parser newLabel = 
+    let innerFn input =
+        let result = parser.parseFn input
+        match result with
+        | Success s ->
+            Success s
+        | Failure (label, error) ->
+            Failure (newLabel, error)
+    { parseFn = innerFn; label = newLabel }
+
+let getLabel parser =
+    parser.label
+
+let (<?>) = setLabel
+
+let printResult result = 
+    match result with
+    | Success (value, input) ->
+        printfn "%A" value
+    | Failure (label, error) ->
+        printfn "Error parsing %s\n%s" label error
 
 let bindP fn parser =
+    let label = "unknown"
     let innerFn input =
         let result = run parser input
         match result with
-        | Failure error ->
-            Failure error
+        | Failure (label, error) ->
+            Failure (label, error)
         | Success (parsed, remainingInput) ->
             let parser2 = fn parsed
             run parser2 remainingInput
-    Parser innerFn
+    { parseFn = innerFn; label = label }
 
 let (>>=) parser fn = bindP fn parser
 
 let returnP value =
     let innerFn input =
         Success (value, input)
-    Parser innerFn
+    { parseFn = innerFn; label = "unknown" }
 
 let andThen parser1 parser2 =
+    let label = sprintf "%s and then %s" (getLabel parser1) (getLabel parser2)
     parser1 >>= (fun result1 ->
     parser2 >>= (fun result2 ->
         returnP (result1, result2)))
+    <?> label
 
 let (.>>.) = andThen
 
 let orElse parser1 parser2 =
+    let label = sprintf "%s or else %s" (getLabel parser1) (getLabel parser2)
     let innerFn input =
         let result1 = run parser1 input
         match result1 with
-        | Failure message ->
+        | Failure (label, error)->
             let result2 = run parser2 input
             match result2 with
-            | Failure message -> Failure message
+            | Failure (label, error) -> Failure (label, error)
             | Success (value, remaining) ->
                 Success (value, remaining)
         | Success (value, remaining) ->
             Success (value, remaining)
-    Parser innerFn
+    { parseFn = innerFn; label = label }
 
 let (<|>) = orElse
 
@@ -70,19 +104,22 @@ let choice parsers =
     List.reduce (<|>) parsers
 
 let anyOf listOfChars =
+    let label = sprintf "any of %A" listOfChars
     listOfChars
     |> List.map parseChar
     |> choice
+    <?> label
 
 let mapParser fn parser =
+    let label = "unknown"
     let innerFn input =
         let result = run parser input
         match result with
         | Success (value, remaining) ->
             Success (fn value, remaining)
-        | Failure error ->
-            Failure error
-    Parser innerFn
+        | Failure (label, error) ->
+            Failure (label, error)
+    { parseFn = innerFn; label = label }
 
 let (<!>) = mapParser
 
@@ -117,7 +154,7 @@ let parseString str =
 let rec parseZeroOrMore parser input =
     let result = run parser input
     match result with
-    | Failure errorMessage ->
+    | Failure (label, error) ->
         ([], input)
     | Success (parsed, inputAfterParse) ->
         let (nextParsed, nextInputAfterParse) = parseZeroOrMore parser inputAfterParse
@@ -127,7 +164,7 @@ let many parser =
     let innerFn input =
         let (parsed, remainingInput) = parseZeroOrMore parser input
         Success (parsed, remainingInput)
-    Parser innerFn
+    { parseFn = innerFn; label = "unknown" }
     
 let oneOrMore parser =
     parser >>= (fun head ->
@@ -139,6 +176,11 @@ let opt parser =
     let none = returnP None
     some <|> none
 
+let parseDigit =
+    let predicate = System.Char.IsDigit
+    let label = "digit"
+    satisfy predicate label
+
 let parseInt input =
     let resultToInt (sign, digits) =
         let value = System.String(List.toArray digits) |> int
@@ -146,9 +188,8 @@ let parseInt input =
         | Some _ -> -value
         | None -> value
 
-    let digitParser = anyOf ['0'..'9']
     let signParser = parseChar '-'
-    let digitsParser = (opt signParser) .>>. (oneOrMore digitParser)
+    let digitsParser = (opt signParser) .>>. (oneOrMore parseDigit)
     
     digitsParser
     |>> resultToInt
