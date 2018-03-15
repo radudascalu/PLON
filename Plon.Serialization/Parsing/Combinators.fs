@@ -1,5 +1,5 @@
-﻿// Implementation based on https://fsharpforfunandprofit.com/posts/understanding-parser-combinators-4/.
-module Parsing
+// Implementation based on https://fsharpforfunandprofit.com/series/understanding-parser-combinators.html.
+module Plon.Serialization.Parsing.Combinators
 
 type ParserLabel = string
 type ParserError = string
@@ -24,11 +24,6 @@ let satisfy predicate label =
             else 
                 Failure (label, (sprintf "Unexpected %c" first))
     { parseFn = innerFn; label = label }
-
-let parseChar charToMatch = 
-    let predicate = (fun char -> char = charToMatch)
-    let label = sprintf "%c" charToMatch
-    satisfy predicate label
 
 let run parser input =
     parser.parseFn input
@@ -103,13 +98,6 @@ let (<|>) = orElse
 let choice parsers =
     List.reduce (<|>) parsers
 
-let anyOf listOfChars =
-    let label = sprintf "any of %A" listOfChars
-    listOfChars
-    |> List.map parseChar
-    |> choice
-    <?> label
-
 let mapParser fn parser =
     let label = "unknown"
     let innerFn input =
@@ -144,13 +132,6 @@ let rec sequence parserList =
     | head :: tail ->
         consP head (sequence tail)
         
-let parseString str =
-    str
-    |> List.ofSeq
-    |> List.map parseChar
-    |> sequence    
-    |> mapParser (fun x -> System.String(List.toArray x))     
-        
 let rec parseZeroOrMore parser input =
     let result = run parser input
     match result with
@@ -176,24 +157,6 @@ let opt parser =
     let none = returnP None
     some <|> none
 
-let parseDigit =
-    let predicate = System.Char.IsDigit
-    let label = "digit"
-    satisfy predicate label
-
-let parseInt input =
-    let resultToInt (sign, digits) =
-        let value = System.String(List.toArray digits) |> int
-        match sign with 
-        | Some _ -> -value
-        | None -> value
-
-    let signParser = parseChar '-'
-    let digitsParser = (opt signParser) .>>. (oneOrMore parseDigit)
-    
-    digitsParser
-    |>> resultToInt
-
 let (>>.) parser1 parser2 =
     parser1 .>>. parser2
     |>> (fun (a, b) -> b)
@@ -204,12 +167,3 @@ let (.>>) parser1 parser2 =
 
 let between parser1 parser2 parser3 =
     parser1 >>. parser2 .>> parser3
-    
-let parseOneOrMoreList elementParser separator =
-    let separatorParser = parseChar separator
-    let separatorAndThenElementParser = separatorParser >>. elementParser
-    elementParser .>>. (many separatorAndThenElementParser)
-    |>> (fun (p1, pRest) -> p1 :: pRest)
-    
-let parseList elementParser separator = 
-    parseOneOrMoreList elementParser separator <|> returnP []

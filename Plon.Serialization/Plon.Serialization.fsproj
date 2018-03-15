@@ -45,7 +45,8 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Metadata.fs" />
-    <Compile Include="Parsing.fs" />
+    <Compile Include="Parsing\Combinators.fs" />
+    <Compile Include="Parsing\Parsers.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
