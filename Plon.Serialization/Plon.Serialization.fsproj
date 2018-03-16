@@ -47,6 +47,8 @@
     <Compile Include="Metadata.fs" />
     <Compile Include="Parsing\Combinators.fs" />
     <Compile Include="Parsing\Parsers.fs" />
+    <Compile Include="Common.fs" />
+    <Compile Include="Serialization\Serializer.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
