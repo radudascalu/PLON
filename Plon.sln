@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.Core", "Plon.Core\Plon
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plon.Serialization", "Plon.Serialization\Plon.Serialization.fsproj", "{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plon.Serialization.Tests", "Plon.Serialization.Tests\Plon.Serialization.Tests.fsproj", "{40137398-0208-4987-95E6-A24A0BD5D18B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40137398-0208-4987-95E6-A24A0BD5D18B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40137398-0208-4987-95E6-A24A0BD5D18B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40137398-0208-4987-95E6-A24A0BD5D18B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40137398-0208-4987-95E6-A24A0BD5D18B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

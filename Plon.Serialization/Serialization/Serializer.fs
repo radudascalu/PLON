@@ -2,6 +2,8 @@ module Plon.Serialization.Serializer
 
 open Plon.Serialization.Common
 open System.Globalization
+open System.Collections
+open System
 
 let serializeNull =
     "null"
@@ -56,15 +58,20 @@ let rec objToPlonObj (obj: obj) =
         | :? double as num -> PNumber (num |> decimal)
         | :? float32 as num -> PNumber (num |> decimal)
         | :? decimal as num -> PNumber (num |> decimal)
-        | :? array<obj> as arr -> 
-            let values = arr |> Array.map objToPlonObj
-            PArray values
+        | :? DateTime as dateTime -> PString (dateTime.ToString())
         | _ -> 
-            let propertiesValues = 
+            if typeof<IEnumerable>.IsAssignableFrom(obj.GetType()) then           
+                obj 
+                :?> IEnumerable
+                |> Seq.cast<obj>
+                |> Seq.map objToPlonObj
+                |> Seq.toArray
+                |> PArray
+            else
                 obj.GetType().GetProperties()
                 |> Array.map (fun prop -> prop.GetValue(obj))
                 |> Array.map objToPlonObj
-            PArray propertiesValues      
+                |> PObject      
         
 let serialize obj =
     obj
