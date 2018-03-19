@@ -64,7 +64,7 @@ namespace PLON.Core
 
         private string GetModelPlonMetadata()
         {
-            return Plon.Serialization.Metadata.getPlonMetadata(modelType);
+            return "TODO: metadata";
         }
 
         private void CreatePreconditionFailedResponse(HttpActionContext actionContext)
