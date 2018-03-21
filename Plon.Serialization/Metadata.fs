@@ -4,15 +4,29 @@ open System.Collections.Generic
 open System.Collections
 open System
 
+type MetadataTypeName = string
+type MetadataPropertyName = string
+
 type MetadataType = 
     | MetadataBool
     | MetadataString
     | MetadataNumber
     | MetadataArray of MetadataType
-    | MetadataObject of MetadataPropertyElement[]
-and MetadataPropertyElement = {
+    | MetadataObject of MetadataTypeName
+
+type MetadataObjectProperty = {
+    Name: MetadataPropertyName
     Type: MetadataType
-    Name: string
+}
+
+type MetadataTypeDefinition = {
+    Name: MetadataTypeName
+    Properties: MetadataObjectProperty list
+}
+
+type PlonMetadata = {
+    DefinedTypes: MetadataTypeDefinition list
+    RootObjectType: MetadataType
 }
 
 let getCollectionType (modelType: System.Type) =
@@ -29,7 +43,8 @@ let getCollectionType (modelType: System.Type) =
     else 
         None
 
-let rec getPlonMetadata (modelType: System.Type) =
+// TODO: Handle System.Object
+let rec extractPlonMetadata modelType (definedTypes: Dictionary<MetadataTypeName, MetadataObjectProperty list>) =
     if modelType = typeof<string> then MetadataString
     else if modelType = typeof<bool> then MetadataBool
     else if modelType = typeof<uint8> then MetadataNumber
@@ -47,11 +62,59 @@ let rec getPlonMetadata (modelType: System.Type) =
     else if typeof<IEnumerable>.IsAssignableFrom(modelType) then           
             let collectionType = getCollectionType modelType
             match collectionType with
-            | Some x -> (getPlonMetadata >> MetadataArray) x
+            | Some x -> MetadataArray (extractPlonMetadata x definedTypes)
             | None -> raise (Exception())
         else
-            modelType.GetProperties()
-            |> Array.map (fun prop -> 
-                { Name = prop.Name;
-                  Type = prop.GetType() |> getPlonMetadata })
-            |> MetadataObject
+            let typeName = modelType.FullName
+            if definedTypes.ContainsKey(typeName) then
+                MetadataObject typeName
+            else
+                definedTypes.Add(typeName, [])
+                modelType.GetProperties()
+                |> Array.map (fun prop -> 
+                    { Name = prop.Name;
+                      Type = extractPlonMetadata prop.PropertyType definedTypes })
+                |> Array.map (fun x -> definedTypes.[typeName] <- List.append definedTypes.[typeName] [x]) 
+                |> ignore
+                MetadataObject typeName
+
+let rec serializeMetadataType metadataType =
+    match metadataType with
+    | MetadataBool -> "bool"
+    | MetadataNumber -> "number"
+    | MetadataString -> "string"
+    | MetadataArray arrayElementType -> (serializeMetadataType arrayElementType) + "[]"
+    | MetadataObject typeName -> typeName
+
+let serializeProperty (property: MetadataObjectProperty) =
+    "{\"name\":\"" + property.Name + "\"," +
+    "\"type\":\"" + serializeMetadataType property.Type + "\"}"
+
+let serializeProperties properties = 
+    properties 
+    |> List.map serializeProperty
+    |> String.concat ","
+
+let serializeDefinedType definedType =
+    "{\"name\":\"" + definedType.Name + "\"," +
+    "\"properties\":[" + serializeProperties definedType.Properties + "]}"
+
+let serializeDefinedTypes definedTypes =
+    definedTypes 
+    |> List.map serializeDefinedType
+    |> String.concat ","
+
+let serializeMetadata metadata = 
+    "{\"definedTypes\":[" + serializeDefinedTypes metadata.DefinedTypes +
+    "],\"_plonRootType\":\"" + serializeMetadataType metadata.RootObjectType + "\"}"
+
+let getPlonMetadata modelType = 
+    let definedTypes = new Dictionary<MetadataTypeName, MetadataObjectProperty list>()
+    let rootObjectType = extractPlonMetadata modelType definedTypes  
+    let definedTypesList =
+        definedTypes
+        |> Seq.map (fun kvp -> {Name = kvp.Key; Properties = kvp.Value})
+        |> Seq.toList
+    { DefinedTypes = definedTypesList;
+      RootObjectType = rootObjectType }
+    |> serializeMetadata
