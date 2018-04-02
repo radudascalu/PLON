@@ -44,10 +44,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Common.fs" />
     <Compile Include="Metadata.fs" />
     <Compile Include="Parsing\Combinators.fs" />
     <Compile Include="Parsing\Parsers.fs" />
-    <Compile Include="Common.fs" />
     <Compile Include="Serialization\Serializer.fs" />
     <Compile Include="Serialization\Deserializer.fs" />
   </ItemGroup>

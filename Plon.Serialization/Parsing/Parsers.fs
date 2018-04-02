@@ -3,6 +3,7 @@ module Plon.Serialization.Parsing.Parsers
 
 open Combinators
 open System
+open Plon.Serialization.Common
 
 /// Parses a char.
 let parseChar charToMatch =
@@ -92,4 +93,61 @@ let parseOneOrMoreList elementParser separator =
 let parseList elementParser separator = 
     parseOneOrMoreList elementParser separator <|> returnP []
 
-    
+/// Applies the parser p, ignores the result and returns x.
+let (>>%) p x =
+    p |>> (fun _ -> x)
+
+let pNull =
+    parseString "null"
+    >>% PNull
+    <?> "null"
+
+let pBool =
+    let pTrue =
+        parseString "true"
+        >>% PBoolean true
+    let pFalse =
+        parseString "false"
+        >>% PBoolean false
+    pTrue <|> pFalse
+    <?> "bool"
+
+let pUnescapedChar =
+    let label = "char"
+    satisfy (fun ch -> ch <> '\\' && ch <> '"') label
+
+let pEscapedChar =
+    [
+    ("\\\"", '\"')
+    ("\\\\", '\\')
+    ("\\\/", '/')
+    ("\\b", '\b')
+    ("\\f", '\f')
+    ("\\n", '\n')
+    ("\\r", '\r')
+    ("\\t", '\t')
+    ]
+    |> List.map (fun (toMatch, result) -> parseString toMatch >>% result)
+    |> choice
+    <?> "escaped char"
+
+let pUnicodeChar = 
+    let backslash = parseChar '\\'
+    let uChar = parseChar 'u'
+    let hexdigit = anyOf (['0'..'9'] @ ['a'..'f'] @ ['A'..'F'])
+
+    let convertToChar (((h1, h2), h3), h4) =
+        let str = sprintf "%c%c%c%c" h1 h2 h3 h4
+        Int32.Parse(str, Globalization.NumberStyles.HexNumber) |> char
+
+    backslash >>. uChar >>. hexdigit .>>. hexdigit .>>. hexdigit .>>. hexdigit
+    |>> convertToChar
+
+let pString = 
+    let quoteChar = parseChar '\"' <?> "quote"
+    let pChar = pUnescapedChar <|> pEscapedChar <|> pUnicodeChar
+
+    quoteChar >>. zeroOrMoreChars pChar .>> quoteChar
+    |>> PString
+    <?> "quoted string"
+
