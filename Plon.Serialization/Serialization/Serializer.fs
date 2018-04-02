@@ -65,12 +65,13 @@ let rec objToPlonObj (obj: obj) =
                 :?> IEnumerable
                 |> Seq.cast<obj>
                 |> Seq.map objToPlonObj
-                |> Seq.toArray
+                |> Seq.toList
                 |> PArray
             else
                 obj.GetType().GetProperties()
                 |> Array.map (fun prop -> prop.GetValue(obj))
                 |> Array.map objToPlonObj
+                |> Seq.toList
                 |> PObject      
         
 let serialize obj =

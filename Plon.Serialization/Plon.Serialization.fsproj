@@ -49,6 +49,7 @@
     <Compile Include="Parsing\Parsers.fs" />
     <Compile Include="Common.fs" />
     <Compile Include="Serialization\Serializer.fs" />
+    <Compile Include="Serialization\Deserializer.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>

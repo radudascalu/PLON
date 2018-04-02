@@ -25,8 +25,8 @@ type MetadataTypeDefinition = {
 }
 
 type PlonMetadata = {
-    DefinedTypes: MetadataTypeDefinition list
-    RootObjectType: MetadataType
+    Types: MetadataTypeDefinition list
+    RootType: MetadataType
 }
 
 let getCollectionType (modelType: System.Type) =
@@ -105,16 +105,16 @@ let serializeDefinedTypes definedTypes =
     |> String.concat ","
 
 let serializeMetadata metadata = 
-    "{\"definedTypes\":[" + serializeDefinedTypes metadata.DefinedTypes +
-    "],\"_plonRootType\":\"" + serializeMetadataType metadata.RootObjectType + "\"}"
+    "{\"types\":[" + serializeDefinedTypes metadata.Types +
+    "],\"rootType\":\"" + serializeMetadataType metadata.RootType + "\"}"
 
 let getPlonMetadata modelType = 
     let definedTypes = new Dictionary<MetadataTypeName, MetadataObjectProperty list>()
-    let rootObjectType = extractPlonMetadata modelType definedTypes  
+    let rootType = extractPlonMetadata modelType definedTypes  
     let definedTypesList =
         definedTypes
         |> Seq.map (fun kvp -> {Name = kvp.Key; Properties = kvp.Value})
         |> Seq.toList
-    { DefinedTypes = definedTypesList;
-      RootObjectType = rootObjectType }
+    { Types = definedTypesList;
+      RootType = rootType }
     |> serializeMetadata
