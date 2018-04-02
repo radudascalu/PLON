@@ -1,4 +1,4 @@
-module Plon.Serialization.Serializer
+module Plon.Serialization.Value.Serializer
 
 open Plon.Serialization.Common
 open System.Globalization
@@ -33,32 +33,32 @@ let serializeObject serializeFn obj =
 
 let rec serializePlonObj plonObj =
     match plonObj with
-    | PString str -> serializeString str
-    | PNumber num -> serializeNumber num
-    | PBoolean bool -> serializeBool bool
-    | PNull -> serializeNull
-    | PArray arr -> serializeArray serializePlonObj arr
-    | PObject obj -> serializeObject serializePlonObj obj
+    | PlonString str -> serializeString str
+    | PlonNumber num -> serializeNumber num
+    | PlonBoolean bool -> serializeBool bool
+    | PlonNull -> serializeNull
+    | PlonArray arr -> serializeArray serializePlonObj arr
+    | PlonObject obj -> serializeObject serializePlonObj obj
     
 let rec objToPlonObj (obj: obj) =
     if obj = null then
-        PNull
+        PlonNull
     else      
         match obj with
-        | :? string as str -> PString str
-        | :? bool as bool -> PBoolean bool
-        | :? uint8 as num -> PNumber (num |> decimal)
-        | :? uint16 as num -> PNumber (num |> decimal)
-        | :? uint32 as num -> PNumber (num |> decimal)
-        | :? uint64 as num -> PNumber (num |> decimal)
-        | :? int8 as num -> PNumber (num |> decimal)
-        | :? int16 as num -> PNumber (num |> decimal)
-        | :? int32 as num -> PNumber (num |> decimal)
-        | :? int64 as num -> PNumber (num |> decimal)
-        | :? double as num -> PNumber (num |> decimal)
-        | :? float32 as num -> PNumber (num |> decimal)
-        | :? decimal as num -> PNumber (num |> decimal)
-        | :? DateTime as dateTime -> PString (dateTime.ToString())
+        | :? string as str -> PlonString str
+        | :? bool as bool -> PlonBoolean bool
+        | :? uint8 as num -> PlonNumber (num |> decimal)
+        | :? uint16 as num -> PlonNumber (num |> decimal)
+        | :? uint32 as num -> PlonNumber (num |> decimal)
+        | :? uint64 as num -> PlonNumber (num |> decimal)
+        | :? int8 as num -> PlonNumber (num |> decimal)
+        | :? int16 as num -> PlonNumber (num |> decimal)
+        | :? int32 as num -> PlonNumber (num |> decimal)
+        | :? int64 as num -> PlonNumber (num |> decimal)
+        | :? double as num -> PlonNumber (num |> decimal)
+        | :? float32 as num -> PlonNumber (num |> decimal)
+        | :? decimal as num -> PlonNumber (num |> decimal)
+        | :? DateTime as dateTime -> PlonString (dateTime.ToString())
         | _ -> 
             if typeof<IEnumerable>.IsAssignableFrom(obj.GetType()) then           
                 obj 
@@ -66,13 +66,13 @@ let rec objToPlonObj (obj: obj) =
                 |> Seq.cast<obj>
                 |> Seq.map objToPlonObj
                 |> Seq.toList
-                |> PArray
+                |> PlonArray
             else
                 obj.GetType().GetProperties()
                 |> Array.map (fun prop -> prop.GetValue(obj))
                 |> Array.map objToPlonObj
                 |> Seq.toList
-                |> PObject      
+                |> PlonObject      
         
 let serialize obj =
     obj

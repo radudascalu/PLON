@@ -58,18 +58,18 @@ let parseList elementParser separator =
 let (>>%) p x =
     p |>> (fun _ -> x)
 
-let pNull =
+let PlonNull =
     parseString "null"
-    >>% PNull
+    >>% PlonNull
     <?> "null"
 
 let pBool =
     let pTrue =
         parseString "true"
-        >>% PBoolean true
+        >>% PlonBoolean true
     let pFalse =
         parseString "false"
-        >>% PBoolean false
+        >>% PlonBoolean false
     pTrue <|> pFalse
     <?> "bool"
 
@@ -104,15 +104,15 @@ let pUnicodeChar =
     backslash >>. uChar >>. hexdigit .>>. hexdigit .>>. hexdigit .>>. hexdigit
     |>> convertToChar
 
-let pString = 
+let PlonString = 
     let quoteChar = parseChar '\"' <?> "quote"
     let pChar = pUnescapedChar <|> pEscapedChar <|> pUnicodeChar
 
     quoteChar >>. zeroOrMoreChars pChar .>> quoteChar
-    |>> PString
+    |>> PlonString
     <?> "quoted string"
 
-let pNumber =
+let PlonNumber =
     let minus = parseString "-"
     let zero = parseString "0"
     let digitOneToNine = satisfy (fun chr -> chr > '0' && chr <= '9') "1-9"
@@ -140,43 +140,43 @@ let pNumber =
 
         signStr + intPart + fractionStr + exponentStr 
         |> decimal
-        |> PNumber
+        |> PlonNumber
 
     opt minus .>>. intPart .>>. opt fractionPart .>>. opt exponentPart
     |>> convertToJNumber
     <?> "number"
 
-let pValue, pValueRef = createParserForwardedToRef<PValue>()
+let PlonValue, PlonValueRef = createParserForwardedToRef<PlonValue>()
 
-let pArray = 
+let PlonArray = 
     let left = parseChar '['
     let right = parseChar ']'
     let separator = ','
     
-    let values = parseList pValue separator
+    let values = parseList PlonValue separator
 
     between left values right
-    |>> PArray
+    |>> PlonArray
     <?> "array"
 
-let pObject =
+let PlonObject =
     let left = parseChar '{'
     let right = parseChar '}'
     let separator = ','
 
-    let propertiesValues = parseList pValue separator
+    let propertiesValues = parseList PlonValue separator
     
     between left propertiesValues right
-    |>> PObject
+    |>> PlonObject
     <?> "object" 
 
-pValueRef := choice
+PlonValueRef := choice
     [
-    pNull
-    pNumber
+    PlonNull
+    PlonNumber
     pBool
-    pString
-    pArray
-    pObject
+    PlonString
+    PlonArray
+    PlonObject
     ]
 

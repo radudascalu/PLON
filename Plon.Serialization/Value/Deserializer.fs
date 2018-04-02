@@ -1,7 +1,6 @@
-﻿module Plon.Serialization.Deserializer
+﻿module Plon.Serialization.Value.Deserializer
 
 open Plon.Serialization
-open Metadata
 open Common
 open System
 open System.Collections.Generic
@@ -9,8 +8,8 @@ open System.Collections.Generic
 let deserializeString obj instance =
     let value = 
         match obj with
-        | PValue.PString str -> str
-        | PValue.PNull -> null
+        | PlonValue.PlonString str -> str
+        | PlonValue.PlonNull -> null
         | _ -> raise (Exception("Expected string."))
     match box instance with 
     | :? string -> value |> box
@@ -20,7 +19,7 @@ let deserializeString obj instance =
 let deserializeNumber obj instance =
     let value = 
         match obj with
-        | PValue.PNumber num -> num
+        | PlonValue.PlonNumber num -> num
         | _ -> raise (Exception("Expected number."))
     match box instance with 
     | :? uint8 as num -> box value
@@ -39,7 +38,7 @@ let deserializeNumber obj instance =
 let deserializeBool obj instance =
     let value = 
         match obj with
-        | PValue.PBoolean bool -> bool
+        | PlonValue.PlonBoolean bool -> bool
         | _ -> raise (Exception("Expected bool."))
     match box instance with
     | :? bool -> value |> box
@@ -54,8 +53,8 @@ let deserializeObjectProperty instance value (propertyMetadata: MetadataObjectPr
 let deserializeObject obj instance (objType: string) (types: IDictionary<MetadataTypeName, MetadataObjectProperty list>) deserializeFn =
     let values = 
         match obj with
-        | PValue.PObject values -> Some values
-        | PValue.PNull -> None
+        | PlonValue.PlonObject values -> Some values
+        | PlonValue.PlonNull -> None
         | _ -> raise (Exception("Expected object."))
     match values with 
     | Some values ->
@@ -68,8 +67,8 @@ let deserializeObject obj instance (objType: string) (types: IDictionary<Metadat
 let deserializeArray obj instance metadataType types deserializeFn =
     let arr = 
         match obj with
-        | PValue.PArray arr -> Some arr
-        | PValue.PNull -> None
+        | PlonValue.PlonArray arr -> Some arr
+        | PlonValue.PlonNull -> None
         | _ -> raise (Exception("Expected array."))
     match arr with 
     | Some arr ->
@@ -82,7 +81,7 @@ let deserializeArray obj instance metadataType types deserializeFn =
             |> box
     | None -> null
 
-let rec deserializeInternal (obj: PValue) instance metadataType types =  
+let rec deserializeInternal (obj: PlonValue) instance metadataType types =  
     match metadataType with
     | MetadataType.MetadataString -> 
         deserializeString obj instance

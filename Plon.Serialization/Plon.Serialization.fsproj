@@ -45,11 +45,14 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Common.fs" />
-    <Compile Include="Metadata.fs" />
     <Compile Include="Parsing\Combinators.fs" />
     <Compile Include="Parsing\Parsers.fs" />
-    <Compile Include="Serialization\Serializer.fs" />
-    <Compile Include="Serialization\Deserializer.fs" />
+    <Compile Include="Value\Serializer.fs" />
+    <Compile Include="Value\Deserializer.fs" />
+    <Compile Include="Metadata\Serializer.fs" />
+    <Compile Include="Metadata\Deserializer.fs" />
+    <Compile Include="Serializer.fs" />
+    <Compile Include="Deserializer.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
