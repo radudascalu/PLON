@@ -43,46 +43,7 @@ let parseString str =
     |>> charListToString 
     <?> label
      
-/// Parses a digit.
-let parseDigit =
-    let predicate = Char.IsDigit
-    let label = "digit"
-    satisfy predicate label
-
-/// Parses an integer.
-let parseInt =
-    let resultToInt (sign, valueString) =
-        let value = valueString |> int
-        match sign with
-        | Some _ -> -value
-        | None -> value
-    
-    let label = "integer"
-    let digits = oneOrMoreChars parseDigit
-    let sign = opt (parseChar '-')
-    
-    sign .>>. digits
-    |>> resultToInt
-    <?> label
-    
-/// Parses a float.
-let parseFloat = 
-    let resultToFloat (((sign, beforeDot), dot), afterDot) =
-        let value = sprintf "%s.%s" beforeDot afterDot |> float
-        match sign with
-        | Some _ -> -value
-        | None -> value
-    
-    let label = "float"
-    let digits = oneOrMoreChars parseDigit
-    let dot = opt (parseChar '.')
-    let sign = opt (parseChar '-')
-    
-    sign .>>. digits .>>. dot .>>. digits
-    |>> resultToFloat
-    <?> label
-    
-/// Parses a list with one or more elementsB.
+/// Parses a list with one or more elements.
 let parseOneOrMoreList elementParser separator =
     let separatorParser = parseChar separator
     let separatorAndThenElementParser = separatorParser >>. elementParser
@@ -150,4 +111,72 @@ let pString =
     quoteChar >>. zeroOrMoreChars pChar .>> quoteChar
     |>> PString
     <?> "quoted string"
+
+let pNumber =
+    let minus = parseString "-"
+    let zero = parseString "0"
+    let digitOneToNine = satisfy (fun chr -> chr > '0' && chr <= '9') "1-9"
+    let digit = satisfy Char.IsDigit "digit"
+    let positiveNonZeroInt = 
+        digitOneToNine .>>. zeroOrMoreChars digit
+        |>> fun (first, rest) -> string first + rest
+    let intPart = zero <|> positiveNonZeroInt
+    
+    let point = parseString "."
+    let fractionPart = 
+        point .>>. oneOrMoreChars digit
+        |>> fun (point, digits) -> point + digits
+
+    let e = parseChar 'e' <|> parseChar 'E'
+    let optPlusOrMinus = opt (parseString "-" <|> parseString "+")
+    let exponentPart = 
+        e >>. optPlusOrMinus .>>. oneOrMoreChars digit
+        |>> fun (sign, digits) -> "e" + (defaultArg sign "") + digits
+
+    let convertToJNumber (((sign, intPart), fractionPart), exponentPart) =
+        let signStr = defaultArg sign ""
+        let fractionStr = defaultArg fractionPart ""
+        let exponentStr = defaultArg exponentPart ""
+
+        signStr + intPart + fractionStr + exponentStr 
+        |> decimal
+        |> PNumber
+
+    opt minus .>>. intPart .>>. opt fractionPart .>>. opt exponentPart
+    |>> convertToJNumber
+    <?> "number"
+
+let pValue, pValueRef = createParserForwardedToRef<PValue>()
+
+let pArray = 
+    let left = parseChar '['
+    let right = parseChar ']'
+    let separator = ','
+    
+    let values = parseList pValue separator
+
+    between left values right
+    |>> PArray
+    <?> "array"
+
+let pObject =
+    let left = parseChar '{'
+    let right = parseChar '}'
+    let separator = ','
+
+    let propertiesValues = parseList pValue separator
+    
+    between left propertiesValues right
+    |>> PObject
+    <?> "object" 
+
+pValueRef := choice
+    [
+    pNull
+    pNumber
+    pBool
+    pString
+    pArray
+    pObject
+    ]
 

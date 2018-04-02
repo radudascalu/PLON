@@ -167,3 +167,16 @@ let (.>>) parser1 parser2 =
 
 let between parser1 parser2 parser3 =
     parser1 >>. parser2 .>> parser3
+
+let createParserForwardedToRef<'a>() = 
+    let dummyParser =
+        let innerFn input : Result<'a * string> = failwith "unfixed forwarded parser"
+        {parseFn = innerFn; label = "unknown"}
+
+    let parserRef = ref dummyParser
+
+    let innerFn input = 
+        run !parserRef input
+    let wrapperParser = {parseFn = innerFn; label = "unknown"}
+
+    wrapperParser, parserRef
