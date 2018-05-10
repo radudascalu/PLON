@@ -1,49 +1,28 @@
 # PLON (Property-less object notation)
 
-PLON provides an alternative to JSON that serializes only the values contained by your objects without any of their properties' name. In order for this to be deserializable, a PLON object also contains the medata of the data it contains.
+PLON provides an alternative to plain JSON by serializing the objects' definition (properties and types) only once in the form of metadata. Serialized objects will therefore be just plain arrays of their properties values.
 
 The goal of PLON is to considerably decrease serialization and deserialization time.
 
-PLON doesn't allow any whitespaces in it's serialization.
+PLON doesn't allow any whitespaces in its serialization.
 
-For example, imagine the following two classes:
-- `Car`, having the properties: `Manufacturer (string)`, `Horsepower (int)`, `Passengers (Passenger[])`;
-- `Passenger`, having the properties: `Name (string)`, `Age (int)`;
+Example: Imagine the following class named `Car`, having the properties: `Manufacturer (string)`, `Horsepower (int)`.
 
-The metadata of a car object would be a JSON object with the following structure (whitespaces added for readability):
+A Car object serialized using PLON will have three properties: `types` and `rootType` (the metadata) and `value` (the PLON-serialized root object value):
 
 ```json
 {
 	"types": [{
 		"name": "Car",
-		"properties": [{		
+		"properties": [{
 			"name": "Manufacturer",
 			"type": "string"
 		}, {
 			"name": "Horsepower",
 			"type": "number"
-		}, {
-			"name": "Passengers",
-			"type": "Passenger[]"
-		}]
-	}, {
-		"name": "Passenger",
-		"properties": [{
-			"name": "Name",
-			"type": "string"
-		}, {
-			"name": "Age",
-			"type": "number"
 		}]
 	}],
-	"rootType": "Car"
+	"rootType": "Car",
+	"value": ["BMW", 250]
 }
 ```
-
-A Car object would be serialized using PLON like this:
-
-`{"BMW",250,[{"Bob",23},{"Alice",22}]}`
-
-The final PLON object will have three properties: `types` and `rootType` (the metadata) and `value` (the PLON-serialized root object value):
-
-`{"types":[{"name":"Car","properties":[{"name":"Manufacturer","type":"string"},{"name":"Horsepower","type":"number"},{"name":"Passengers","type":"Passenger[]"}]},{"name":"Passenger","properties":[{"name":"Name","type":"string"},{"name":"Age","type":"number"}]}],"rootType":"Car","value":{"BMW",250,[{"Bob",23},{"Alice",22}]}}`
