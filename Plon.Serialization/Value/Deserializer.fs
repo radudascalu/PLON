@@ -5,99 +5,121 @@ open Common
 open System
 open System.Collections.Generic
 
-let deserializeString obj instance =
+let deserializeString obj (objType: Type) =
     let value = 
         match obj with
         | PlonValue.PlonString str -> str
         | PlonValue.PlonNull -> null
         | _ -> raise (Exception("Expected string."))
-    match box instance with 
-    | :? string -> value |> box
-    | :? DateTime -> if (value = null) then null else DateTime.Parse(value) |> box
-    | _ -> raise (Exception("Expected string."))
+
+    if (objType = typeof<string>) then value |> box
+    else if (objType = typeof<DateTime>) then DateTime.Parse(value) |> box
+    else raise (Exception("Expected string."))
     
-let deserializeNumber obj instance =
+let deserializeNumber obj objType =
     let value = 
         match obj with
         | PlonValue.PlonNumber num -> num
         | _ -> raise (Exception("Expected number."))
-    match box instance with 
-    | :? uint8 as num -> box value
-    | :? uint16 as num -> box value
-    | :? uint32 as num -> box value
-    | :? uint64 as num -> box value
-    | :? int8 as num -> box value
-    | :? int16 as num -> box value
-    | :? int32 as num -> box value
-    | :? int64 as num -> box value
-    | :? double as num -> box value
-    | :? float32 as num -> box value
-    | :? decimal as num -> box value
-    | _ -> raise (Exception("Expected number."))
 
-let deserializeBool obj instance =
+    if (objType = typeof<uint8>) then box (Convert.ToUInt16(value))
+    else if (objType = typeof<uint16>) then box (Convert.ToUInt16(value))
+    else if (objType = typeof<uint32>) then box (Convert.ToUInt32(value))
+    else if (objType = typeof<uint64>) then box (Convert.ToUInt64(value))
+    else if (objType = typeof<int8>) then box (Convert.ToInt16(value))
+    else if (objType = typeof<int16>) then box (Convert.ToInt16(value))
+    else if (objType = typeof<int32>) then box (Convert.ToInt32(value))
+    else if (objType = typeof<int64>) then box (Convert.ToInt64(value))
+    else if (objType = typeof<double>) then box (Convert.ToDouble(value))
+    else if (objType = typeof<decimal>) then box value
+    // TODO: Handle overflow exceptions, other number types?
+    else raise (Exception("Expected number."))
+
+let deserializeBool obj objType =
     let value = 
         match obj with
         | PlonValue.PlonBoolean bool -> bool
         | _ -> raise (Exception("Expected bool."))
-    match box instance with
-    | :? bool -> value |> box
-    | _ -> raise(Exception("Expected bool."))
 
-let deserializeObjectProperty instance value (propertyMetadata: MetadataObjectProperty) types deserializeFn =
-    let property = instance.GetType().GetProperty(propertyMetadata.Name)
-    let propertyInstance = Activator.CreateInstance(property.PropertyType)
-    let propertyValue = deserializeFn value propertyInstance propertyMetadata.Type types 
+    if (objType = typeof<bool>) then box value
+    else raise(Exception("Expected bool."))
+
+let deserializeObjectProperty instance (objType: Type) value (propertyMetadata: MetadataObjectProperty) types deserializeFn =
+    let property = objType.GetProperty(propertyMetadata.Name)
+    let propertyValue = deserializeFn value property.PropertyType propertyMetadata.Type types 
     property.SetValue(instance, propertyValue)
+    // TODO: Handle no property setter
+    // TODO: Handle members as well
 
-let deserializeObject obj instance (objType: string) (types: IDictionary<MetadataTypeName, MetadataObjectProperty list>) deserializeFn =
+let deserializeObject obj (objType: Type) (metadataType: string) (metadataTypes: IDictionary<MetadataTypeName, MetadataObjectProperty list>) deserializeFn =
     let values = 
         match obj with
         | PlonValue.PlonObject values -> Some values
         | PlonValue.PlonNull -> None
         | _ -> raise (Exception("Expected object."))
+    
+    let instance = Activator.CreateInstance(objType)
     match values with 
     | Some values ->
-        let properties = types.[objType]
-        List.map2 (fun p v -> deserializeObjectProperty instance v p types deserializeFn) properties values
+        let properties = metadataTypes.[metadataType]
+        List.map2 (fun p v -> deserializeObjectProperty instance objType v p metadataTypes deserializeFn) properties values
         |> ignore
         instance
     | None -> null
  
-let deserializeArray obj instance metadataType types deserializeFn =
+type ListHelper() =
+    member self.createList<'T> () = 
+        new List<'T>()
+
+    member self.createListOfType (elemType: System.Type) =
+        typeof<ListHelper>.GetMethod("createList").MakeGenericMethod(elemType).Invoke(self, [||])
+        
+    member self.createFSharpList<'T> (list: obj) =
+        List.ofSeq (list :?> IEnumerable<'T>)
+
+    member self.createFSharpListOfType (elemType: System.Type) (list: obj) =
+        typeof<ListHelper>.GetMethod("createFSharpList").MakeGenericMethod(elemType).Invoke(self, [|list|])
+   
+let deserializeArray obj objType metadataType metadataTypes deserializeFn =
     let arr = 
         match obj with
         | PlonValue.PlonArray arr -> Some arr
         | PlonValue.PlonNull -> None
         | _ -> raise (Exception("Expected array."))
-    match arr with 
-    | Some arr ->
-        match getCollectionType (instance.GetType()) with
-        | None -> raise (Exception("Expected collection."))
-        | Some elementType -> 
-            arr
-            |> List.map (fun elem -> deserializeFn elem (Activator.CreateInstance(elementType)) metadataType types)
-            |> List.toSeq
-            |> box
-    | None -> null
 
-let rec deserializeInternal (obj: PlonValue) instance metadataType types =  
+    match getCollectionType (objType) with
+        | None -> raise (Exception("Expected collection."))
+        | Some elemType -> 
+            match arr with
+            | Some elems ->
+                let result = ListHelper().createListOfType elemType :?> System.Collections.IList          
+                elems
+                |> List.map (fun elem -> deserializeFn elem elemType metadataType metadataTypes |> unbox)
+                |> List.iter (fun elem -> result.Add(elem) |> ignore)
+
+                if (objType.Name.Contains("FSharpList")) then
+                    ListHelper().createFSharpListOfType elemType result
+                else 
+                    result |> box
+            | None -> null
+
+let rec deserializeInternal (obj: PlonValue) objType metadataType metadataTypes =  
     match metadataType with
     | MetadataType.MetadataString -> 
-        deserializeString obj instance
+        Convert.ChangeType(deserializeString obj objType, objType)
     | MetadataType.MetadataNumber -> 
-        deserializeNumber obj instance
+        Convert.ChangeType(deserializeNumber obj objType, objType)
     | MetadataType.MetadataBool -> 
-        deserializeBool obj instance
+        Convert.ChangeType(deserializeBool obj objType, objType)
     | MetadataType.MetadataArray arrayType -> 
-        deserializeArray obj instance arrayType types deserializeInternal
-    | MetadataType.MetadataObject objType ->
-        deserializeObject obj instance objType types deserializeInternal
-
+        deserializeArray obj objType arrayType metadataTypes deserializeInternal
+    | MetadataType.MetadataObject metadataType ->
+        Convert.ChangeType(deserializeObject obj objType metadataType metadataTypes deserializeInternal, objType)
+        
 let deserialize<'a> obj (metadata: PlonMetadata) =
-    let types = 
+    let metadataTypes = 
         metadata.Types
         |> List.map (fun t -> t.Name, t.Properties)
         |> dict
-    let instance = Activator.CreateInstance(typeof<'a>) |> box
-    deserializeInternal obj instance metadata.RootType types :?> 'a
+
+    deserializeInternal obj typeof<'a> metadata.RootType metadataTypes :?> 'a
