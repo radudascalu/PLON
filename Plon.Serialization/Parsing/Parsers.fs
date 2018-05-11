@@ -180,3 +180,72 @@ PlonValueRef := choice
     PlonObject
     ]
 
+let getPlonString =
+    function 
+    | PlonString str -> str
+    | _ -> failwith "TODO"
+
+let getMetadataType (str: string) =
+    let reversedInput = String(str.ToCharArray() |> Array.rev)
+    // TODO: Handle failure
+    let (lst, rest) = parseZeroOrMore (parseString "[]") reversedInput
+    let mutable metadataType = 
+        match String(rest.ToCharArray() |> Array.rev) with
+        | "bool" -> MetadataBool
+        | "string" -> MetadataString
+        | "number" -> MetadataNumber
+        | customType -> MetadataObject customType
+    lst
+    |> List.iter (fun _ -> metadataType <- MetadataArray metadataType)
+    metadataType
+
+let parseType =
+    PlonString
+    |>> (fun str -> (getPlonString >> getMetadataType) str)
+
+let parseTypeProperty = 
+    parseString "{\"name\":"
+    >>. PlonString
+    .>> parseString ",\"type\":"
+    .>>. parseType
+    .>> parseChar '}'
+    |>> (fun (propName, propType) -> { Name = getPlonString propName; Type = propType })
+
+let parseTypeProperties = 
+    parseChar '['
+    >>. parseList parseTypeProperty ','
+    .>> parseChar ']'
+
+let parseMetadataType = 
+    parseString "{\"name\":"
+    >>. PlonString
+    .>> parseString ",\"properties\":"
+    .>>. parseTypeProperties
+    .>> parseChar '}'
+    |>> (fun (typeName, props) -> { Name = getPlonString typeName; Properties = props })
+
+let parseMetadataTypes = 
+    parseChar '[' 
+    >>. parseList parseMetadataType ','
+    .>> parseString "]"
+
+let parseMetadata =
+    parseString "\"types\":"
+    >>. parseMetadataTypes
+    .>> parseString ",\"rootType\":"
+    .>>. parseType
+    |>> (fun (types, rootType) -> { Types = types; RootType = rootType })
+    <?> "metadata"
+
+let parseValue = 
+    parseString "\"value\":"
+    >>. PlonValue
+    <?> "value"
+
+let parsePlonObject = 
+    parseChar '{' 
+    >>. parseMetadata
+    .>> parseChar ','
+    .>>. parseValue
+    .>> parseChar '}'
+    <?> "PLON object"

@@ -25,11 +25,11 @@ let serializeArray serializeFn array =
     "]"
 
 let serializeObject serializeFn obj =   
-    "{" +
+    "[" +
     (obj 
     |> Seq.map serializeFn
     |> String.concat ",") +
-    "}"
+    "]"
 
 let rec serializePlonObj plonObj =
     match plonObj with
@@ -74,7 +74,7 @@ let rec objToPlonObj (obj: obj) =
                 |> Seq.toList
                 |> PlonObject      
         
-let serialize obj =
+let serializeValue obj =
     obj
     |> objToPlonObj
     |> serializePlonObj

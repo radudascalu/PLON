@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ComplexObjects.fs" />
-    <Compile Include="Metadata.fs" />
     <Compile Include="Value.fs" />
   </ItemGroup>
   <ItemGroup>

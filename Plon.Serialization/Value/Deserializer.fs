@@ -55,6 +55,7 @@ let deserializeObject obj (objType: Type) (metadataType: string) (metadataTypes:
     let values = 
         match obj with
         | PlonValue.PlonObject values -> Some values
+        | PlonValue.PlonArray values -> Some values //TODO: Remove once parser is fixed
         | PlonValue.PlonNull -> None
         | _ -> raise (Exception("Expected object."))
     

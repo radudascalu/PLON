@@ -66,11 +66,11 @@ let serializeDefinedTypes definedTypes =
     |> List.map serializeDefinedType
     |> String.concat ","
 
-let serializeMetadata metadata = 
-    "{\"types\":[" + serializeDefinedTypes metadata.Types +
-    "],\"rootType\":\"" + serializeMetadataType metadata.RootType + "\"}"
+let serializePlonMetadata metadata = 
+    "\"types\":[" + serializeDefinedTypes metadata.Types +
+    "],\"rootType\":\"" + serializeMetadataType metadata.RootType + "\""
 
-let getPlonMetadata modelType = 
+let serializeMetadata modelType = 
     let definedTypes = new Dictionary<MetadataTypeName, MetadataObjectProperty list>()
     let rootType = extractPlonMetadata modelType definedTypes  
     let definedTypesList =
@@ -79,4 +79,4 @@ let getPlonMetadata modelType =
         |> Seq.toList
     { Types = definedTypesList;
       RootType = rootType }
-    |> serializeMetadata
+    |> serializePlonMetadata
