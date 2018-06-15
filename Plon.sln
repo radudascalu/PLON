@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.SampleApp", "Plon.SampleApp\Plon.SampleApp.csproj", "{E0FA1417-C552-4A70-A3CD-703EE1554A38}"
 EndProject
@@ -9,7 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.Core", "Plon.Core\Plon
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plon.Serialization", "Plon.Serialization\Plon.Serialization.fsproj", "{CC5BB72B-1936-4C8A-A59F-EF286C2058C7}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Plon.Serialization.Tests", "Plon.Serialization.Tests\Plon.Serialization.Tests.fsproj", "{40137398-0208-4987-95E6-A24A0BD5D18B}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Plon.Serialization.Tests", "Plon.Serialization.Tests\Plon.Serialization.Tests.fsproj", "{40137398-0208-4987-95E6-A24A0BD5D18B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plon.Core.PerformanceTests", "Plon.Core.PerformanceTests\Plon.Core.PerformanceTests.csproj", "{634260DE-28F7-4702-8ED1-59195205017A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,8 +35,15 @@ Global
 		{40137398-0208-4987-95E6-A24A0BD5D18B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40137398-0208-4987-95E6-A24A0BD5D18B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40137398-0208-4987-95E6-A24A0BD5D18B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{634260DE-28F7-4702-8ED1-59195205017A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{634260DE-28F7-4702-8ED1-59195205017A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{634260DE-28F7-4702-8ED1-59195205017A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{634260DE-28F7-4702-8ED1-59195205017A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {74645AC1-00F1-466F-9FC3-7C649AE5DC31}
 	EndGlobalSection
 EndGlobal
