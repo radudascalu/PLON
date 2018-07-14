@@ -12,6 +12,7 @@ namespace Plon.Core.PerformanceTests
             TestFewProperties();
             Console.WriteLine();
             TestNumerousPropertiesAndNestedObjects();
+            Console.ReadLine();
         }
 
         private static void TestFewProperties()
@@ -52,7 +53,7 @@ namespace Plon.Core.PerformanceTests
             stopwatch.Start();
             for (var idx = 0; idx < noOfIterations; idx++)
             {
-                var plonDeserialized = PlonConvert.Deserialize<FewProperties>(plonSerialized);
+                var plonDeserialized = PlonConvert.Deserialize<NumerousPropertiesAndNestedObjects>(plonSerialized);
             }
             stopwatch.Stop();
             Console.WriteLine(stopwatch.Elapsed.TotalSeconds);
@@ -62,7 +63,7 @@ namespace Plon.Core.PerformanceTests
             stopwatch.Start();
             for (var idx = 0; idx < noOfIterations; idx++)
             {
-                var jsonDeserialized = JsonConvert.DeserializeObject<FewProperties>(jsonSerialized);
+                var jsonDeserialized = JsonConvert.DeserializeObject<NumerousPropertiesAndNestedObjects>(jsonSerialized);
             }
             stopwatch.Stop();
             Console.WriteLine(stopwatch.Elapsed.TotalSeconds);

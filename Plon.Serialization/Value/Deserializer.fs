@@ -4,6 +4,24 @@ open Plon.Serialization
 open Common
 open System
 open System.Collections.Generic
+open System.Collections.Concurrent
+open System.Reflection
+
+type TypeCache() =
+    let mutable cache = new ConcurrentDictionary<string, Dictionary<string, PropertyInfo>>()
+    
+    member self.getPropertyInfo (objType: Type) propertyName =
+        if cache.ContainsKey(objType.FullName) = false then
+            cache.TryAdd(objType.FullName, new Dictionary<string, PropertyInfo>()) |> ignore
+        
+        let props = ref Unchecked.defaultof<Dictionary<string, PropertyInfo>>
+        cache.TryGetValue(objType.FullName, props)
+
+        if props.Value.ContainsKey(propertyName) = false then
+            props.Value.Add(propertyName, objType.GetProperty(propertyName))
+        props.Value.Item(propertyName)
+
+ let typeCache = TypeCache()
 
 let deserializeString obj (objType: Type) =
     let value = 
@@ -45,7 +63,7 @@ let deserializeBool obj objType =
     else raise(Exception("Expected bool."))
 
 let deserializeObjectProperty instance (objType: Type) value (propertyMetadata: MetadataObjectProperty) types deserializeFn =
-    let property = objType.GetProperty(propertyMetadata.Name)
+    let property = typeCache.getPropertyInfo objType propertyMetadata.Name
     let propertyValue = deserializeFn value property.PropertyType propertyMetadata.Type types 
     property.SetValue(instance, propertyValue)
     // TODO: Handle no property setter
